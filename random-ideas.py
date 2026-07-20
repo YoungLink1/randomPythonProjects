@@ -11,6 +11,28 @@ def clear_console():
     else:
         os.system('clear')
 
+# Converts between a Boolean and Binary output for simplicity.
+def state_convert(var):
+    """Converts a Binary (1 or 0) / Boolean (True or False) to the opposite form.
+    
+    Args:
+        Requires a variable being plugged into this.
+
+    Returns:
+        var.type == "int" <===> var.type == "bool"
+    """
+    if var is int:
+        if var == 1:
+            var = True
+        elif var == 0:
+            var = False
+    elif var is bool:
+        if var == True:
+            var = 1
+        elif var == False:
+            var = 0
+    return var
+
 # Check if the user has pygame-ce.
 try:
     import pygame
@@ -143,12 +165,16 @@ def poll_mouse(value=int()):
 
 # End of Global Pygame Related Functions.
 
+PS4_button_ref = ["Cross Button", "Circle Button", "Square Button", "Triangle Button", "Share Button", "PS Button", "Options Button", "Left Stick", "Right Stick", "Left Bumper", "Right Bumper", "D-Pad Up", "D-Pad Down", "D-Pad Left", "D-Pad Right", "Touch Pad"]
+PS4_axis_ref = ["LS X-Axis", "LS Y-Axis", "RS X-Axis", "RS Y-Axis", "Left Trigger", "Right Trigger"]
 
-
-DEBUG_testItem = int(input("What test do you want?\n> "))
+DEBUG_testItem = int(input(f"pygame-ce {pygame.ver}\nWhat test do you want?\n> "))
 clear_console()
 
-if DEBUG_testItem == 1:
+if DEBUG_testItem == 0:
+    os.system("%USERPROFILE%/AppData/Roaming/Python/Python310/site-packages/pygame/docs/generated/ref/draw.html")
+
+elif DEBUG_testItem == 1:
     #try to make an interactive UI/GUI
     from pygame import MOUSEWHEEL
 
@@ -165,9 +191,6 @@ if DEBUG_testItem == 1:
             if event.type == pygame.QUIT:
                 running = False
 
-        pygame.display.flip()
-        clock.tick(30) # limits FPS to 30
-
         debugInfo = f"""{poll_mouse(-3)}
         LMB = {poll_mouse(1)}
         MMB = {poll_mouse(2)}
@@ -180,6 +203,9 @@ if DEBUG_testItem == 1:
         clear_console()
         sleep(0)
         print(debugInfo)
+
+        pygame.display.flip()
+        clock.tick(30) # limits FPS to 30
     
     pygame.quit()
 
@@ -286,10 +312,10 @@ elif DEBUG_testItem == 5:
         else:
             pygame.draw.polygon(screen, (50, 50, 50), poly_MMB, 0)
 
-        if poll_mouse(7) > 0:
+        if poll_mouse(6) > 0:
             pygame.draw.polygon(screen, (200, 50, 80), poly_SCWU, 0)
             #input("scroll is above 0")
-        elif poll_mouse(7) < 0:
+        elif poll_mouse(6) < 0:
             pygame.draw.polygon(screen, (200, 50, 80), poly_SCWD, 0)
             #input("scroll is below 0")
         #elif poll_mouse(6) == 0:
@@ -303,3 +329,61 @@ elif DEBUG_testItem == 5:
 
         pygame.display.flip()
         clock.tick(30) # limits FPS to 30
+
+elif DEBUG_testItem == 6:
+    from pygame import Color
+    pygame.init()
+    screen = pygame.display.set_mode((480, 360))
+    clock = pygame.time.Clock()
+    running = True
+    
+    # This dict can be left as-is, since pygame-ce will generate a
+    # pygame.JOYDEVICEADDED event for every joystick connected
+    # at the start of the program.
+    joysticks = {}
+
+    while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            
+            # Handle hotplugging; from pygame-ce Documentation
+            if event.type == pygame.JOYDEVICEADDED:
+                # This event will be generated when the program starts for every
+                # joystick, filling up the list without needing to create them manually.
+                joy = pygame.joystick.Joystick(event.device_index)
+                joysticks[joy.get_instance_id()] = joy
+                print(f"Joystick {joy.get_instance_id()} connected. {joysticks[joy.get_instance_id()].get_name()}")
+
+            if event.type == pygame.JOYDEVICEREMOVED:
+                if event.instance_id in joysticks:
+                    del joysticks[event.instance_id]
+                    print(f"Joystick {event.instance_id} disconnected")
+                else:
+                    print(
+                        f"Tried to disconnect Joystick {event.instance_id}, "
+                        "but couldn't find it in the joystick list"
+                    )
+
+            # Handle Button Inputs
+            if event.type == pygame.JOYBUTTONDOWN:
+                print(f"[Joystick '{event.instance_id}'] {PS4_button_ref[event.button]} pressed.") # PS4 Support
+
+            if event.type == pygame.JOYBUTTONUP:
+                print(f"[Joystick '{event.instance_id}'] {PS4_button_ref[event.button]} released.") # PS4 Support
+
+            # Handle Joystick / Trigger Inputs
+            if event.type == pygame.JOYAXISMOTION:
+                #input(event)
+                if event.axis < 4:
+                    continue
+                else:
+                    print(f"[Joystick '{event.instance_id}'] {PS4_axis_ref[event.axis]}: {event.value}") # PS4 Support
+
+        pygame.display.flip()
+        clock.tick(30) # limits FPS to 30
+
+    pygame.joystick.quit()
+    pygame.quit()
