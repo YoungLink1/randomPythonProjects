@@ -219,8 +219,10 @@ class DragPolygon(Polygon):
             current_y = poll_mouse(-2)
             
             while self.draggable:
-                prior_x = poll_mouse
-                prior_y = 0
+                prior_x = current_x
+                prior_y = current_y
+                current_x = poll_mouse(-1)
+                current_y = poll_mouse(-2)
 
                 if self.is_clicked((current_x, current_y)) & self.held > neededHold:
                     return "dragging"
