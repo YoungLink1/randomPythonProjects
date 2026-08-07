@@ -1,4 +1,4 @@
-# Function and Library importing:
+﻿# Function and Library importing:
 from time import sleep
 import os
 
@@ -11,12 +11,15 @@ def clear_console():
     else:
         os.system('clear')
 
-# Reloads the Program.
-def reload_program(current_filename=os.path.basename(__file__)):
-    """Runs this program again. If ran in the middle of a program, the program that ran this function will continue after the ran function is over.
+# Starts a Python script.
+def reload_python(current_filename=os.path.basename(__file__)):
+    """Runs a Python script.
+    If ran in the middle of a program, the program that ran this function will continue after the ran function is over.
+    
+    Defaults to running the current Python script.
     
     Args:
-        current_filename: The filename of this Python file.
+        {optional} current_filename: The filename of this Python file. Can be changed to load other program.
 
     Returns:
         Runs the called Python file and then resumes the Python file that called it, once done.
@@ -24,14 +27,14 @@ def reload_program(current_filename=os.path.basename(__file__)):
     os.system("python " + current_filename)
 
 # Converts between a Boolean and Binary output for simplicity.
-def state_convert(var):
+def state_convert(var:int | bool):
     """Converts a Binary (1 or 0) / Boolean (True or False) to the opposite form.
     
     Args:
         Requires a variable being plugged into this.
 
     Returns:
-        var.type == "int" <===> var.type == "bool"
+        Binary | Boolean
     """
     if var is int:
         if var == 1:
@@ -105,28 +108,29 @@ except ImportError:
 # End of Library / Function Importing.
 
 # Start of Global Pygame Related Functions / Classes:
-def poll_mouse(value=int()):
+def poll_mouse(value:int) -> tuple | bool | int:
         """Gives an easy to read and use output of various mouse actions.
         Supports 3 & 5 button mice.
-        Outputs as a boolean.
+        
+        Args:
+            value: What info should be polled from the mouse.
 
-        MOUSE POSITION:
-        -1 = Mouse X [WINDOW]
-        -2 = Mouse Y [WINDOW]
-        -3 = Combined WINDOW Mouse X & Y
-        -4 = Mouse X [DESKTOP]
-        -5 = Mouse Y [DESKTOP]
-        -6 = Combined DESKTOP Mouse X & Y
+            - MOUSE POSITION:
+            ⤷ -1 = Mouse X [WINDOW]
+            ⤷ -2 = Mouse Y [WINDOW]
+            ⤷ -3 = Combined WINDOW Mouse X & Y
+            ⤷ -4 = Mouse X [DESKTOP]
+            ⤷ -5 = Mouse Y [DESKTOP]
+            ⤷ -6 = Combined DESKTOP Mouse X & Y
         \n
-        BUTTONS:
-        1 = Left Mouse Button
-        2 = Middle Mouse Button (clicked, no scroll)
-        3 = Right Mouse Button
-        4 = Button 4 (Side Button 1)
-        5 = Button 5 (Side Button 2)
-        6 = Scroll Wheel
-        7 = Scroll Wheel [Alt Method; Less Precise]
-        """
+            - BUTTONS:
+            ⤷ 1 = Left Mouse Button
+            ⤷ 2 = Middle Mouse Button (clicked, no scroll)
+            ⤷ 3 = Right Mouse Button
+            ⤷ 4 = Button 4 (Side Button 1)
+            ⤷ 5 = Button 5 (Side Button 2)
+            ⤷ 6 = Scroll Wheel
+            ⤷ 7 = Scroll Wheel [Alt Method; Less Precise]"""
         from pygame import MOUSEWHEEL, MOUSEBUTTONDOWN
 
         WINDOW_mousePos = pygame.mouse.get_pos(desktop=False) # tuple
@@ -175,6 +179,73 @@ def poll_mouse(value=int()):
             case _:
                 return('Invalid Poll Action in FUNC: "poll_mouse()"')
 
+def runFile(filePath:str, interrupt=False) -> None:
+    """Run/Open a file or program.
+
+    Args:
+        interrupt: If the file should interrupt the program or not."""
+    if interrupt:
+        from subprocess import Popen
+        Popen(str(filePath))
+    else:
+        from subprocess import run
+        run(str(filePath))
+
+def printImage(surface:pygame.Surface, position:tuple=(0, 0), loadMode:int=0, file_image:str=None, crop:bool=False, cropPos:tuple=(0,0), cropArea:tuple=(64, 64), scale:bool=False, scaleMode:float=None, scaleAmount:tuple|float=None):
+    """Load an image onto a pygame Surface.
+    
+    Args:
+        surface: A pygame Surface for the image to be loaded onto.
+        position: The position on the given Surface on which the image will be drawn to.
+        loadMode: The method in which a image will be loaded.
+          ⤷ 0 = File Path
+          ⤷ 1 = pygame.image
+        file_image: The file or image to be loaded. Supports most modern formats.
+
+        crop: Should the image be cropped?
+        cropPos: The topright position within the image from which it will be cropped.
+        cropArea: The width and height of the croppped area.
+
+        scale: Should the image be scaled?
+        scaleMode: The scale mode to be used.
+          ⤷ 0 / 0.1 = Scale to (x, y) OR by XXX%.
+          ⤷ 1 / 1.1 = Smoothly Scale to (x, y) OR by XXX%. Looks similar to Bilinear or Bicubic.
+        scaleAmount: The amount for the image to be scaled to or by."""
+    # Loads the image, checking if it's from a file, or a passed in pygame.image.
+    if loadMode == 0:
+        file_image = pygame.image.load(f"{file_image}").convert_alpha()
+    elif loadMode == 1:
+        file_image = file_image.convert_alpha()
+
+    # Crops the image, starting from the topright 'cropPos' value given, and extending by the given cropArea values.
+    if crop is True:
+        file_image = file_image.subsurface(pygame.Rect(cropPos[0], cropPos[1], cropArea[0], cropArea[1])).copy()
+
+    # Scales the image, choosing between pure and smooth scaling. Or not, if not scaling.
+    if scale is True:
+        if scaleMode == 0:
+            file_image = pygame.transform.scale(file_image, scaleAmount)
+        elif scaleMode == 0.1:
+            file_image = pygame.transform.scale_by(file_image, scaleAmount[0] if type(scaleAmount) is tuple else scaleAmount)
+        elif scaleMode == 1:
+            file_image = pygame.transform.smoothscale(file_image, scaleAmount)
+        elif scaleMode == 1.1:
+            file_image = pygame.transform.smoothscale_by(file_image, scaleAmount[0] if type(scaleAmount) is tuple else scaleAmount)
+
+    surface.blit(file_image, position)
+
+def printText(surface:pygame.Surface, font:str='arial', color:tuple=(255, 255, 255), text:str=None, position:tuple=(0, 0), antiAlias=True, bgColor:tuple=None):
+    """Load text onto a pygame Surface.
+    
+    Args:
+        surface: A pygame Surface for the text to be loaded onto.
+        font: The font to be rendered. | Needs a pygame.font.Font().
+        color: The color for text be rendered.
+        text: The text to be rendered.
+        position: The position on the given Surface on which the text will be drawn to."""
+    bgColor == pygame.SRCALPHA if bgColor is None else bgColor == bgColor
+    surface.blit(font.render('test', antiAlias, color, bgColor), position)
+
 class Polygon:
         """Class meant for creating objects within pygame off of a list of points.
         -------------------------------------------------------
@@ -194,20 +265,42 @@ class Polygon:
         def __init__(self, points, screen_size=(480, 360)):
             self.points = points
 
+            # 0. Check if the the usual "screen" Surface exists to grab screen size if not already specified.
+            screen_size = (screen.get_width(), screen.get_height()) if 'screen' in globals() else screen_size
+            self.screen_size = screen_size
+
             # 1. Bake the surface & mask it ONCE on creation.
             self.surface = pygame.Surface(screen_size, pygame.SRCALPHA)
             pygame.draw.polygon(self.surface, (255, 255, 255), self.points)
             self.mask = pygame.mask.from_surface(self.surface)
 
+
         # When called, checks on the mask if the position has a pixel or not.
-        def is_hovered(self, position):
+        def is_hovered(self, position=tuple):
             """Check for collision using the pre-baked mask, to see if there's overlap with the given position."""
-            return bool(self.mask.get_at(position))
+            # Makes sure the given position is within bounds as to not crash the program.
+            if position[0] < 0:
+                x = 0
+            elif position[0] > (self.screen_size[0] - 1):
+                x = (self.screen_size[0] - 1)
+            else:
+                x = position[0]
+
+            if position[1] < 0:
+                y = 0
+            elif position[1] > (self.screen_size[1] - 1):
+                y = (self.screen_size[1] - 1)
+            else:
+                y = position[1]
+
+            # Actual check to make sure the given position is hovering over the polygon.
+            return bool(self.mask.get_at((x, y)))
 
         def is_clicked(self, position):
             """Check if object is hovered and then clicked. Uses 'is_hovered()' to check collision."""
             return self.is_hovered(position) & poll_mouse(1)
 
+# will figure out how to make this work later lol
 class DragPolygon(Polygon):
         "Subclass of Polygon meant for dragable objects."
         def __init__(self, points, neededHold):
@@ -242,7 +335,7 @@ clear_console()
 if DEBUG_testItem == 0:
     os.system("%USERPROFILE%/AppData/Roaming/Python/Python310/site-packages/pygame/docs/generated/ref/draw.html")
     os.system("%USERPROFILE%/AppData/Local/Programs/Python/Python310/Lib/site-packages/pygame/docs/generated/ref/draw.html")
-    reload_program()
+    reload_python()
 
 elif DEBUG_testItem == 1:
     #try to make an interactive UI/GUI
@@ -492,8 +585,10 @@ elif DEBUG_testItem == 8:
     running = True
 
     poly_LMB = [(44.5, 89), (44.5, 0), (33.375, 2.225), (24.475, 6.675), (15.575, 13.35), (8.9, 24.475), (3.56, 37.825), (0.89, 57.85), (0, 89)]
-    btn_LMB = DragPolygon(poly_LMB, 5)
+    btn_LMB = Polygon(poly_LMB)
     LMB_held = 0
+
+    import subprocess as sbp
 
     while running:
     # poll for events
@@ -503,14 +598,16 @@ elif DEBUG_testItem == 8:
                 running = False
 
         screen.fill((30, 30, 30))
+        clear_console()
 
         mouse_pos = poll_mouse(-3)
-        clear_console()
         if btn_LMB.is_clicked(mouse_pos):
             LMB_held += 1
-            if LMB_held >= 10:
+            if LMB_held > 10:
                 pygame.draw.polygon(screen, (90, 90, 105), poly_LMB, 0)
                 print(f"held click {LMB_held}")
+            elif LMB_held == 10:
+                runFile("D:\SteamLibrary\steamapps\common\DELTARUNE\DELTARUNE.exe")
             else:
                 pygame.draw.polygon(screen, (90, 90, 90), poly_LMB, 0)
                 print(f"clicked {LMB_held}")
@@ -527,3 +624,53 @@ elif DEBUG_testItem == 8:
 
         pygame.display.flip()
         clock.tick(30) # limits FPS to 30
+
+elif DEBUG_testItem == 9:
+    pygame.init()
+    screen = pygame.display.set_mode((480, 520))
+    clock = pygame.time.Clock()
+    running = True
+
+    btn1 = Polygon([(0, 0), (95, 0), (95, 71), (0, 71)])
+
+    while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        
+        screen.fill((30, 30, 30))
+        pygame.draw.polygon(screen, (90, 90, 105), [(0, 0), (95, 0), (95, 71), (0, 71)], 0)
+
+        mouse_pos = poll_mouse(-3)
+        if btn1.is_clicked(mouse_pos):
+            printImage(screen, r"C:\Users\aiden\Downloads\placeholder.png")
+            pygame.display.set_caption("You lost the Game.")
+        else:
+            pygame.display.set_caption("Neat Program")
+
+        pygame.display.flip()
+        clock.tick(30)
+
+elif DEBUG_testItem == 10:
+    pygame.init()
+    screen = pygame.display.set_mode((480, 520))
+    clock = pygame.time.Clock()
+    running = True
+
+    font = pygame.font.Font(pygame.font.match_font('arial'), 20)
+
+    while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        screen.fill((30, 30, 30))
+        screen.blit(font.render('test', True, (255, 255, 255), (63, 0, 63)))
+        #printText(screen, 'arial', (255,255,255), 'test')
+
+        pygame.display.flip()
+        clock.tick(30)
